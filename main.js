@@ -1,37 +1,28 @@
-module.exports = function(proxies) {
-    // Add a "busy" flag to proxy definitions
-    for (var i = 0; i < proxies.length; i++) {
-        proxies[i].busy = false;
-    }
-    // Module's object
+var _ = require('underscore');
+module.exports = function (proxies) {
     return {
-        takeProxy: function() {
-            for (var i = 0; i < proxies.length; i++) {
-                if (false === proxies[i].busy) {
-                    proxies[i].busy = true;
-                    return proxies[i].address;
-                }
-            }
+        takeProxy: function () {
+            var proxy = _.sample(proxies);
+            proxy.busy = true;
+            return proxy;
         },
-        freeProxy: function(address, callback) {
-            // Mark the current proxy as free
-            for (var i in proxies) {
-                if (proxies[i].address === address) {
-                    proxies[i].busy = false;
+        // Mark the given proxy as free
+        freeProxy: function (address, callback) {
+            for (var index in proxies) {
+                if (proxies[index].address === address || proxies[index].ipv4 === address) {
+                    delete proxies[index].busy;
                     break;
                 }
             }
-            if (undefined != callback) {
+            if (callback) {
                 // Whether we have a free proxy
-                var hasFree = false;
-                for (var i in proxies) {
-                    if (!proxies[i].busy) {
-                        hasFree = true;
+                for (var index in proxies) {
+                    if (!proxies[index].busy) {
+                        callback(undefined, true);
+                        return;
                     }
                 }
-                if (hasFree == true) {
-                    callback();
-                }
+                callback(undefined, false);
             }
         }
     };
