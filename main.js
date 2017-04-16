@@ -17,11 +17,21 @@ module.exports = function (proxies) {
             return proxy;
         },
         // Mark the given proxy as free
-        free: function (address, callback) {
+        free: function (proxy, callback) {
             for (var index in proxies) {
-                if (proxies[index].address === address || proxies[index].ipv4 === address) {
-                    delete proxies[index].busy;
-                    break;
+                var current = proxies[index];
+                if (proxy instanceof String) {
+                    if (current.address === proxy) {
+                        delete current.busy;
+                        break;
+                    }
+                } else if (proxy instanceof Object) {
+                    if (current.ipv4 === proxy.ipv4 &&
+                        current.port === proxy.port &&
+                        current.type === proxy.type) {
+                        delete current.busy;
+                        break;
+                    }
                 }
             }
             if (callback) {
