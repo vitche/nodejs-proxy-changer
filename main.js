@@ -8,6 +8,9 @@ module.exports = function (proxies) {
         },
         take: function () {
             var freeProxies = _.filter(proxies, function (proxy) {
+                if (!proxy) {
+                    return false;
+                }
                 return !proxy.busy;
             });
             var proxy = _.sample(freeProxies);
@@ -15,6 +18,34 @@ module.exports = function (proxies) {
                 proxy.busy = true;
             }
             return proxy;
+        },
+        error: function(proxy, callback) {
+            for (var index in proxies) {
+                var current = proxies[index];
+                if (proxy instanceof String) {
+                    if (current.address === proxy) {
+                        delete proxies[index];
+                        break;
+                    }
+                } else if (proxy instanceof Object) {
+                    if (current.ipv4 === proxy.ipv4 &&
+                        current.port === proxy.port &&
+                        current.type === proxy.type) {
+                        delete proxies[index];
+                        break;
+                    }
+                }
+            }
+            if (callback) {
+                // Whether we have a free proxy
+                for (var index in proxies) {
+                    if (!proxies[index].busy) {
+                        callback(undefined, true);
+                        return;
+                    }
+                }
+                callback(undefined, false);
+            }            
         },
         // Mark the given proxy as free
         free: function (proxy, callback) {
